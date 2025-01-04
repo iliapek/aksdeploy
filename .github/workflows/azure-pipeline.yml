@@ -79,7 +79,7 @@ resource "azurerm_kubernetes_cluster_extension" "ingress_controller" {
   type                  = "CustomScript"
   settings = <<SETTINGS
 {
-    "script": "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/azure-pipeline.yaml"
+    "script": "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yml"
 }
 SETTINGS
 }
