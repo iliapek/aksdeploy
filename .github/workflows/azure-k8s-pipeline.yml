@@ -30,12 +30,6 @@ jobs:
         tenant-id: ${{ secrets.AZURE_AD_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
-
-    - name: Get AKS credentials
-      run: |
-        az aks get-credentials --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} --name ${{ secrets.AKS_CLUSTER_NAME }} --admin
-        mkdir -p ~/.kube  # Ensure the .kube directory exists
-        echo "Kubeconfig set"
         
     - name: Install Dependencies
       run: |
@@ -56,6 +50,12 @@ jobs:
     - name: Terraform Apply
       working-directory: ./terraform
       run: terraform apply -auto-approve
+
+    - name: Get AKS credentials
+      run: |
+        az aks get-credentials --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} --name ${{ secrets.AKS_CLUSTER_NAME }} --admin
+        mkdir -p ~/.kube  # Ensure the .kube directory exists
+        echo "Kubeconfig set"
 
     - name: Install kubectl
       run: |
