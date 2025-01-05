@@ -10,6 +10,9 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write  # Granting write permission to the id-token
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
