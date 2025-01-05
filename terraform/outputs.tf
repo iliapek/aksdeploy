@@ -1,8 +1,11 @@
 output "aks_cluster_name" {
-  value = azurerm_kubernetes_cluster.aks.name
+  value = azurerm_kubernetes_cluster.aks_cluster.name
 }
 
-output "acr_login_server" {
-  value = azurerm_container_registry.acr.login_server
+output "acr_name" {
+  value = azurerm_container_registry.acr.name
 }
 
+output "aks_kubeconfig" {
+  value = azurerm_kubernetes_cluster.aks_cluster.kube_config[0].raw_kube_config
+}
