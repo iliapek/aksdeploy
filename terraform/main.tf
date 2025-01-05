@@ -1,45 +1,46 @@
-# Generate random resource group name
-resource "random_pet" "rg_name" {
-  prefix = var.resource_group_name_prefix
+provider "azurerm" {
+  features {}
 }
 
-resource "azurerm_resource_group" "rg" {
-  location = var.resource_group_location
-  name     = random_pet.rg_name.id
+# Resource Group
+resource "azurerm_resource_group" "aks_rg" {
+  name     = "aks-demo-rg"
+  location = "East US"
 }
 
-resource "random_pet" "azurerm_kubernetes_cluster_name" {
-  prefix = "cluster"
+# Azure Container Registry
+resource "azurerm_container_registry" "acr" {
+  name                     = "Iliasacr"  # Should be globally unique
+  resource_group_name      = azurerm_resource_group.aks_rg.name
+  location                 = azurerm_resource_group.aks_rg.location
+  sku                       = "Basic"
+  admin_enabled            = true
 }
 
-resource "random_pet" "azurerm_kubernetes_cluster_dns_prefix" {
-  prefix = "dns"
-}
+# Azure Kubernetes Service (AKS)
+resource "azurerm_kubernetes_cluster" "aks" {
+  name                = "aks-demo-cluster"
+  location           = azurerm_resource_group.aks_rg.location
+  resource_group_name = azurerm_resource_group.aks_rg.name
+  dns_prefix         = "aks-demo"
 
-resource "azurerm_kubernetes_cluster" "k8s" {
-  location            = azurerm_resource_group.rg.location
-  name                = random_pet.azurerm_kubernetes_cluster_name.id
-  resource_group_name = azurerm_resource_group.rg.name
-  dns_prefix          = random_pet.azurerm_kubernetes_cluster_dns_prefix.id
+  default_node_pool {
+    name       = "default"
+    node_count = 1
+    vm_size    = "Standard_DS2_v2"
+  }
 
   identity {
     type = "SystemAssigned"
   }
 
-  default_node_pool {
-    name       = "agentpool"
-    vm_size    = "Standard_D2_v2"
-    node_count = var.node_count
-  }
-  linux_profile {
-    admin_username = var.username
-
-    ssh_key {
-      key_data = azapi_resource_action.ssh_public_key_gen.output.publicKey
-    }
-  }
-  network_profile {
-    network_plugin    = "kubenet"
-    load_balancer_sku = "standard"
+  tags = {
+    environment = "demo"
   }
 }
+
+# Output the kubeconfig file location
+output "kubeconfig" {
+  value = azurerm_kubernetes_cluster.aks.kube_config.0.raw_kube_config
+}
+
