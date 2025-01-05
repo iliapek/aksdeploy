@@ -40,10 +40,10 @@ jobs:
         docker --version
 
     - name: Terraform Init
-      run: terraform init
+      run: terraform init /aksdeploy/terraform/
 
     - name: Terraform Plan
-      run: terraform plan
+      run: terraform plan /aksdeploy/terraform/
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
