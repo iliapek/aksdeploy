@@ -58,7 +58,8 @@ jobs:
           sudo mv ./kubectl /usr/local/bin/kubectl
 
     - name: Set up kubeconfig
-      run: echo "${{ secrets.AKS_KUBECONFIG }}" > ~/.kube/config
+      run: mkdir -p ~/.kube
+           echo "${{ secrets.AKS_KUBECONFIG }}" > ~/.kube/config
 
     - name: Install Helm
       run: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3.sh | bash
