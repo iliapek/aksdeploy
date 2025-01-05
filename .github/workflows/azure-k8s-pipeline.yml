@@ -40,12 +40,19 @@ jobs:
         docker --version
 
     - name: Terraform Init
-      run: terraform init /aksdeploy/terraform/
+      working-directory: ./terraform
+      run: terraform init 
+      
+    - name: Terraform fmt
+      working-directory: ./terraform
+      run: terraform fmt -check
 
     - name: Terraform Plan
+      working-directory: ./terraform
       run: terraform plan /aksdeploy/terraform/
 
     - name: Terraform Apply
+      working-directory: ./terraform
       run: terraform apply -auto-approve
 
   deploy:
