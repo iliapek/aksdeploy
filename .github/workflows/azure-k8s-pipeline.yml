@@ -51,25 +51,18 @@ jobs:
       working-directory: ./terraform
       run: terraform apply -auto-approve
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: terraform
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
-    - name: Set up kubectl
-      uses: azure/setup-kubectl@v1
-
-    - name: Configure kubeconfig for AKS
+    - name: Install kubectl
       run: |
-        echo "${{ secrets.AKS_KUBECONFIG }}" > ~/.kube/config
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+    - name: Set up kubeconfig
+      run: echo "${{ secrets.AKS_KUBECONFIG }}" > ~/.kube/config
+
+    - name: Install Helm
+      run: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3.sh | bash
 
     - name: Install NGINX Ingress Controller
       run: |
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
-
-    - name: Verify Ingress Controller
-      run: |
-        kubectl get pods -n ingress-nginx
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
