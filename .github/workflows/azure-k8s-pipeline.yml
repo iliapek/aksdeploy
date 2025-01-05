@@ -45,7 +45,7 @@ jobs:
 
     - name: Terraform Plan
       working-directory: ./terraform
-      run: terraform plan /aksdeploy/terraform/
+      run: terraform plan
 
     - name: Terraform Apply
       working-directory: ./terraform
