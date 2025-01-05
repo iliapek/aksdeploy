@@ -37,7 +37,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   private_cluster {
     enable_private_cluster = true
-
+  }
   tags = {
     environment = "demo"
   }
