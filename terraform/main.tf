@@ -2,39 +2,44 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "rg" {
-  name     = "rg-aks-cluster"
+# Resource Group
+resource "azurerm_resource_group" "aks_rg" {
+  name     = "aks-rg"
   location = "East US"
 }
 
+# Virtual Network
+resource "azurerm_virtual_network" "aks_vnet" {
+  name                = "aks-vnet"
+  location            = azurerm_resource_group.aks_rg.location
+  resource_group_name = azurerm_resource_group.aks_rg.name
+  address_space       = ["10.0.0.0/16"]
+}
+
+# Subnet for AKS
+resource "azurerm_subnet" "aks_subnet" {
+  name                 = "aks-subnet"
+  resource_group_name  = azurerm_resource_group.aks_rg.name
+  virtual_network_name = azurerm_virtual_network.aks_vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+# Azure Container Registry (ACR)
 resource "azurerm_container_registry" "acr" {
-  name                = "mycontainerregistry"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  name                = "myContainerRegistry"
+  location            = azurerm_resource_group.aks_rg.location
+  resource_group_name = azurerm_resource_group.aks_rg.name
   sku                 = "Basic"
   admin_enabled       = true
 }
 
-resource "azurerm_virtual_network" "vnet" {
-  name                = "aks-vnet"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-  address_space       = ["10.0.0.0/8"]
-}
+# Azure Kubernetes Service (AKS) Cluster with Private API Server
+resource "azurerm_kubernetes_cluster" "aks_cluster" {
+  name                = "myAKSCluster"
+  location            = azurerm_resource_group.aks_rg.location
+  resource_group_name = azurerm_resource_group.aks_rg.name
+  dns_prefix          = "myakscluster"
 
-resource "azurerm_subnet" "aks_subnet" {
-  name                 = "aks-subnet"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.1.0/24"]
-}
-
-resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "my-aks-cluster"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  dns_prefix          = "myaks"
-  
   linux_profile {
     admin_username = "azureuser"
     ssh_key {
@@ -42,45 +47,31 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
 
-  agent_pool_profile {
-    name            = "default"
-    count           = 3
-    vm_size         = "Standard_DS2_v2"
-    os_type         = "Linux"
-    vnet_subnet_id  = azurerm_subnet.aks_subnet.id
-    availability_zones = ["1", "2", "3"]
-  }
-
-  service_principal {
-    client_id     = var.client_id
-    client_secret = var.client_secret
+  default_node_pool {
+    name       = "default"
+    node_count = 2
+    vm_size    = "Standard_DS2_v2"
+    vnet_subnet_id = azurerm_subnet.aks_subnet.id
   }
 
   network_profile {
-    network_plugin = "kubenet"
-    network_policy = "calico"
+    network_plugin     = "azure"
+    network_policy     = "calico"
+    pod_cidr           = "10.244.0.0/16"
+    service_cidr       = "10.0.0.0/24"
+    dns_service_ip     = "10.0.0.10"
+    docker_bridge_cidr = "172.17.0.1/16"
   }
 
   private_cluster {
-    enable_private_cluster = true
+    enabled = true
+  }
+
+  identity {
+    type = "SystemAssigned"
   }
 
   tags = {
-    environment = "dev"
+    environment = "production"
   }
 }
-
-resource "azurerm_kubernetes_cluster_extension" "ingress_controller" {
-  name                 = "nginx-ingress-controller"
-  cluster_name         = azurerm_kubernetes_cluster.aks.name
-  resource_group_name  = azurerm_resource_group.rg.name
-  extension_type       = "Kubernetes"
-  publisher             = "Microsoft.Azure.Extensions"
-  type                  = "CustomScript"
-  settings = <<SETTINGS
-{
-    "script": "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml"
-}
-SETTINGS
-}
-
