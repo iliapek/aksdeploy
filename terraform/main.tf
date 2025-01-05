@@ -43,6 +43,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
 # Output the kubeconfig file location
 output "kubeconfig" {
   value = azurerm_kubernetes_cluster.aks.kube_config_raw
+sensitive = true
+
 }
 
 
