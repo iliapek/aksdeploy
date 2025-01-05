@@ -43,10 +43,6 @@ jobs:
       working-directory: ./terraform
       run: terraform init 
 
-    - name: Terraform Import Resource Group
-      working-directory: ./terraform
-      run: terraform import azurerm_resource_group.aks_rg /subscriptions/15cef44d-8801-46a4-8a75-c4a45b0c9964/resourceGroups/aks-demo-rg
-
     - name: Terraform Plan
       working-directory: ./terraform
       run: terraform plan
